@@ -33,7 +33,6 @@ export class Board extends Component {
   backgroundTile: UITransform;
 
   public initBoard(selectedLevel: ILevelConfig) {
-    console.log('setup background tile');
     const { x, y } = this.backgroundTile.node.position;
     const { x: xScale, y: yScale } = this.backgroundTile.node.scale;
     this.node.setPosition(
@@ -41,8 +40,6 @@ export class Board extends Component {
       y + (this.backgroundTile.width / 2) * yScale
     );
     this.node.setScale(xScale, yScale);
-
-    console.log('setup wall');
 
     this.drawBoard(selectedLevel.boardConfig);
 
@@ -61,12 +58,6 @@ export class Board extends Component {
         return col.getTileData();
       });
     });
-
-    console.log('print realtoin');
-    this.tileRealToIndexMap.forEach((val, key) => {
-      console.log([key]);
-    });
-    
   }
 
   private generateTile(

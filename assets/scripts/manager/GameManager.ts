@@ -68,8 +68,6 @@ export class GameManager extends Component {
   snakeSound: AudioSource;
 
   start() {
-    // test
-    console.log('eqqq', v2(0, 0).equals(v2(0, 0)));
     const lvl = this.randomizeLevel
       ? Math.floor(Math.random() * Object.keys(levels).length) + 1
       : this.level;
@@ -106,7 +104,6 @@ export class GameManager extends Component {
       this.score % this.updateBeatRateEvery === 0
     ) {
       this.beatRate -= this.beatRateUpdate;
-      console.log(`UPDATE SPEEEDO FROM TO ${this.beatRate}`);
       this.unschedule(this.beatHandler);
       this.schedule(
         this.beatHandler,
@@ -118,7 +115,6 @@ export class GameManager extends Component {
   }
 
   private beatHandler() {
-    console.log(this.beatRate);
     this.processFoodToTail();
     this.moveSnake();
   }
@@ -203,7 +199,7 @@ export class GameManager extends Component {
               rotateTo =
                 this.snake[i + 1].IndexPos.x < this.snake[i].IndexPos.x
                   ? 180
-                  : 90; // if from left
+                  : 90;
               break;
             case -90:
               rotateTo =
@@ -250,7 +246,6 @@ export class GameManager extends Component {
       if (this.board.tileRealToIndexMap.has(key)) {
         part.IndexPos = this.board.tileRealToIndexMap.get(key);
       } else {
-        console.log('pos has no index', posV2);
         return;
       }
     });
@@ -335,7 +330,6 @@ export class GameManager extends Component {
     const { x, y } = pos;
     // if out of area
     if (this.checkOutOfArea(math.v2(x, y))) {
-      console.log('snke', this.getSnakeIndexPos());
       this.playCrashSound();
       this.setGameOver();
       return;
@@ -422,24 +416,13 @@ export class GameManager extends Component {
     );
     const tileData = randomTile.getTileData();
     const tileIndex = tileData.index;
-    console.log('proposed index to spawn ', tileIndex);
     if (
       tileData.content === TILE_CONTENT.WALL ||
       this.isSnakePartByIndex(tileIndex) ||
       this.isNearHead(tileIndex)
     ) {
-      console.log('index rejected', [
-        tileData.content === TILE_CONTENT.WALL,
-        this.isSnakePartByIndex(tileIndex),
-      ]);
       return this.spawnFood();
     }
-    console.log('index accepted is not a wall');
-    console.log(
-      'index accepted not a snake part',
-      this.snake.map((part) => part.IndexPos)
-    );
-    console.log('spawning food @', tileIndex);
     return randomTile.setTileContent(TILE_CONTENT.FRUIT);
   }
 
@@ -455,7 +438,6 @@ export class GameManager extends Component {
           this.snake[0].IndexPos,
           this.snake[1].IndexPos
         );
-        console.log('first game direction ', this.gameDirection);
       }
     });
 
@@ -465,7 +447,6 @@ export class GameManager extends Component {
         Vec2.equals(this.prevDirection, Vec2Helper.RIGHT)
       ) {
         this.gameDirection = Vec2Helper.UP;
-        console.log('this direction up ', this.gameDirection);
       }
     });
     keypadManager.node.on(CONTROLLER_EVENT.LEFT, () => {
@@ -474,7 +455,6 @@ export class GameManager extends Component {
         Vec2.equals(this.prevDirection, Vec2Helper.DOWN)
       ) {
         this.gameDirection = Vec2Helper.LEFT;
-        console.log('this direction left ', this.gameDirection);
       }
     });
     keypadManager.node.on(CONTROLLER_EVENT.DOWN, () => {
@@ -498,7 +478,6 @@ export class GameManager extends Component {
   private checkOutOfArea(posIndex: Vec2) {
     const { x, y } = posIndex;
     if (x < 0 || x > 11 || y < 0 || y > 11) {
-      console.log('out of area');
       return true;
     }
     return false;
