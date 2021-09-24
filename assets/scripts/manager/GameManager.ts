@@ -40,6 +40,8 @@ export class GameManager extends Component {
   private prevDirection = new Vec2();
   private canMove: boolean;
   private beatRate = 0.5;
+  private updateBeatRateEvery = 5;
+  private beatRateUpdate = 0.1;
 
   @property(Number)
   level: 1;
@@ -67,7 +69,7 @@ export class GameManager extends Component {
 
   start() {
     // test
-    console.log('eqqq', v2(0,0).equals(v2(0,0)));
+    console.log('eqqq', v2(0, 0).equals(v2(0, 0)));
     const lvl = this.randomizeLevel
       ? Math.floor(Math.random() * Object.keys(levels).length) + 1
       : this.level;
@@ -85,14 +87,38 @@ export class GameManager extends Component {
   }
 
   private setupBeat() {
-    this.schedule(this.beatHandler, this.beatRate, macro.REPEAT_FOREVER, 1);
+    this.schedule(
+      this.beatHandler,
+      this.beatRate,
+      macro.REPEAT_FOREVER,
+      this.beatRate
+    );
   }
 
   private stopBeat() {
     this.unschedule(this.beatHandler);
   }
 
+  private checkForUpdateBeat() {
+    if (
+      this.score > 0 &&
+      this.beatRate >= 0.1 &&
+      this.score % this.updateBeatRateEvery === 0
+    ) {
+      this.beatRate -= this.beatRateUpdate;
+      console.log(`UPDATE SPEEEDO FROM TO ${this.beatRate}`);
+      this.unschedule(this.beatHandler);
+      this.schedule(
+        this.beatHandler,
+        this.beatRate,
+        macro.REPEAT_FOREVER,
+        this.beatRate
+      );
+    }
+  }
+
   private beatHandler() {
+    console.log(this.beatRate);
     this.processFoodToTail();
     this.moveSnake();
   }
@@ -213,7 +239,6 @@ export class GameManager extends Component {
     }
 
     this.updateSnakeIndex();
-    
   }
 
   private updateSnakeIndex() {
@@ -335,6 +360,7 @@ export class GameManager extends Component {
       this.spawnFood();
       this.snakeEat(x, y, 1);
       this.uIManager.updateScore(++this.score);
+      this.checkForUpdateBeat();
     }
   }
 
@@ -342,6 +368,28 @@ export class GameManager extends Component {
     return this.snake.map((part, i) => {
       return part.IndexPos;
     });
+  }
+
+  private isNearHead(pos: Vec2) {
+    const nearHeadPattern = [
+      [-1, 0],
+      [1, 0],
+      [-1, -1],
+      [1, -1],
+      [0, -1],
+      [0, 1],
+      [-1, 1],
+      [1, 1],
+    ];
+    const { x, y } = this.snake[0].IndexPos;
+
+    const res = nearHeadPattern.map((p) => {
+      const ex = p[0];
+      const ye = p[1];
+      return v2(ex + x, ye + y);
+    });
+
+    return res.findIndex((v) => v.x === pos.x && v.y === pos.y) > -1;
   }
 
   private snakeEat(x: number, y: number, length: number) {
@@ -377,7 +425,8 @@ export class GameManager extends Component {
     console.log('proposed index to spawn ', tileIndex);
     if (
       tileData.content === TILE_CONTENT.WALL ||
-      this.isSnakePartByIndex(tileIndex)
+      this.isSnakePartByIndex(tileIndex) ||
+      this.isNearHead(tileIndex)
     ) {
       console.log('index rejected', [
         tileData.content === TILE_CONTENT.WALL,
@@ -386,7 +435,10 @@ export class GameManager extends Component {
       return this.spawnFood();
     }
     console.log('index accepted is not a wall');
-    console.log('index accepted not a snake part', this.snake.map(part => part.IndexPos));
+    console.log(
+      'index accepted not a snake part',
+      this.snake.map((part) => part.IndexPos)
+    );
     console.log('spawning food @', tileIndex);
     return randomTile.setTileContent(TILE_CONTENT.FRUIT);
   }
@@ -453,8 +505,10 @@ export class GameManager extends Component {
   }
 
   private isSnakePartByIndex(pos: Vec2) {
-    const {x, y} = pos;
-    const res = this.getSnakeIndexPos().findIndex((val) => val.x === x && val.y === y) > -1;
+    const { x, y } = pos;
+    const res =
+      this.getSnakeIndexPos().findIndex((val) => val.x === x && val.y === y) >
+      -1;
     return res;
   }
 
