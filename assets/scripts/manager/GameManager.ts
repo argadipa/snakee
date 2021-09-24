@@ -7,7 +7,6 @@ import {
   instantiate,
   Vec2,
   v2,
-  Vec3,
   AudioSource,
   assetManager,
   AudioClip,
@@ -28,6 +27,7 @@ import { Vec2Helper } from '../helper/VectorDirection';
 import { UIManager } from './UIManager';
 import { getAssetKey } from '../helper/Asset';
 import { GlobalManager } from './GlobalManager';
+import { v2ToString } from '../Helper';
 const { ccclass, property } = _decorator;
 
 @ccclass('GameManager')
@@ -66,6 +66,8 @@ export class GameManager extends Component {
   snakeSound: AudioSource;
 
   start() {
+    // test
+    console.log('eqqq', v2(0,0).equals(v2(0,0)));
     const lvl = this.randomizeLevel
       ? Math.floor(Math.random() * Object.keys(levels).length) + 1
       : this.level;
@@ -93,7 +95,6 @@ export class GameManager extends Component {
   private beatHandler() {
     this.processFoodToTail();
     this.moveSnake();
-    
   }
 
   private moveSnake() {
@@ -148,13 +149,13 @@ export class GameManager extends Component {
       );
       this.snake[i].setDirection(dirDelta);
 
-      //  if (i === this.snake.length - 1) {
-      this.snake[i].node.setRotationFromEuler(
-        0,
-        0,
-        -Vec2Helper.VecToAngle(dirDelta)
-      );
-      // }
+      if (i === this.snake.length - 1) {
+        this.snake[i].node.setRotationFromEuler(
+          0,
+          0,
+          -Vec2Helper.VecToAngle(dirDelta)
+        );
+      }
 
       // change body parts sprite
       if (i < this.snake.length - 1) {
@@ -210,6 +211,24 @@ export class GameManager extends Component {
         this.snake[i].setSprite(SNAKE_PART_SPRITE.TAIL);
       }
     }
+
+    this.updateSnakeIndex();
+    
+  }
+
+  private updateSnakeIndex() {
+    //update snake index
+    this.snake.forEach((part) => {
+      const { x, y } = part.node.position;
+      const posV2 = v2(x, y);
+      const key = v2ToString(posV2);
+      if (this.board.tileRealToIndexMap.has(key)) {
+        part.IndexPos = this.board.tileRealToIndexMap.get(key);
+      } else {
+        console.log('pos has no index', posV2);
+        return;
+      }
+    });
   }
 
   private processFoodToTail() {
@@ -223,7 +242,10 @@ export class GameManager extends Component {
           v2(key.getTileData().pos.x, key.getTileData().pos.y),
           key.getTileData().pos
         );
-        snakePart.node.setPosition(key.getTileData().pos.x, key.getTileData().pos.y);
+        snakePart.node.setPosition(
+          key.getTileData().pos.x,
+          key.getTileData().pos.y
+        );
         snakePart.node.setParent(this.board.node);
         this.snake.push(snakePart);
         key.setTileContent(TILE_CONTENT.NONE);
@@ -281,12 +303,14 @@ export class GameManager extends Component {
         }
       }
     }
+    this.updateSnakeIndex();
   }
 
   private checkSnekConsume(pos: Vec2, dir: Vec2) {
     const { x, y } = pos;
     // if out of area
     if (this.checkOutOfArea(math.v2(x, y))) {
+      console.log('snke', this.getSnakeIndexPos());
       this.playCrashSound();
       this.setGameOver();
       return;
@@ -304,7 +328,7 @@ export class GameManager extends Component {
         this.setGameOver();
         return;
       }
-    })
+    });
 
     if (this.board.isTileFruit(x, y)) {
       this.board.clearTile(x, y);
@@ -320,20 +344,6 @@ export class GameManager extends Component {
     });
   }
 
-  private getSnakeRealPosV2() {
-    return this.snake.map((part, i) => {
-      const {x, y} = part.node.position;
-      const realPosV2 = new Vec2(x,y);
-      return realPosV2;
-    });
-  }
-
-  private getSnakeRealPosV3() {
-    return this.snake.map((part, i) => {
-      return part.node.position;
-    });
-  }
-
   private snakeEat(x: number, y: number, length: number) {
     const tile = this.board.getTileFromIndex(x, y);
     tile.changeFoodToSnakePart();
@@ -343,13 +353,17 @@ export class GameManager extends Component {
 
   private playEatSound() {
     if (GlobalManager.muteSound) return;
-    const clip = assetManager.assets.get(getAssetKey(ASSET_KEY.EAT)) as AudioClip;
+    const clip = assetManager.assets.get(
+      getAssetKey(ASSET_KEY.EAT)
+    ) as AudioClip;
     this.snakeSound.playOneShot(clip);
   }
 
   private playCrashSound() {
     if (GlobalManager.muteSound) return;
-    const clip = assetManager.assets.get(getAssetKey(ASSET_KEY.CRASH)) as AudioClip;
+    const clip = assetManager.assets.get(
+      getAssetKey(ASSET_KEY.CRASH)
+    ) as AudioClip;
     this.snakeSound.playOneShot(clip);
   }
 
@@ -359,12 +373,21 @@ export class GameManager extends Component {
       math.randomRangeInt(0, 12)
     );
     const tileData = randomTile.getTileData();
+    const tileIndex = tileData.index;
+    console.log('proposed index to spawn ', tileIndex);
     if (
       tileData.content === TILE_CONTENT.WALL ||
-      this.isSnakePartByRealPos(randomTile.node.position)
+      this.isSnakePartByIndex(tileIndex)
     ) {
+      console.log('index rejected', [
+        tileData.content === TILE_CONTENT.WALL,
+        this.isSnakePartByIndex(tileIndex),
+      ]);
       return this.spawnFood();
     }
+    console.log('index accepted is not a wall');
+    console.log('index accepted not a snake part', this.snake.map(part => part.IndexPos));
+    console.log('spawning food @', tileIndex);
     return randomTile.setTileContent(TILE_CONTENT.FRUIT);
   }
 
@@ -430,22 +453,9 @@ export class GameManager extends Component {
   }
 
   private isSnakePartByIndex(pos: Vec2) {
-    this.getSnakeIndexPos().forEach((part) => {
-      if (part.equals(pos)) return true;
-    });
-    return false;
-  }
-
-  private isSnakePartByRealPos(pos: Vec3) {
-    this.getSnakeRealPosV3().forEach((part) => {
-      console.log(part);
-      if (part.equals(pos)) {
-        console.log('food position in snake!', [pos, part])
-        return true;
-      }
-    });
-    console.log('food is not in snake', pos);
-    return false;
+    const {x, y} = pos;
+    const res = this.getSnakeIndexPos().findIndex((val) => val.x === x && val.y === y) > -1;
+    return res;
   }
 
   private setGameOver() {

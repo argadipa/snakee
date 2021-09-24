@@ -7,11 +7,13 @@ import {
   math,
   randomRangeInt,
   v2,
+  Vec2,
 } from 'cc';
 import { Tile, TileData } from './Tile';
 const { ccclass, property } = _decorator;
 import { ILevelConfig } from '../interface';
 import { TILE_CONTENT } from '../enum';
+import { v2ToString } from '../Helper';
 
 const tileWidth = 48;
 
@@ -19,6 +21,10 @@ const tileWidth = 48;
 export class Board extends Component {
   private tiles: Tile[][] = [];
   private tileDatas: TileData[][] = [];
+  // real pos, index pos
+  public tileRealToIndexMap = new Map<string, Vec2>();
+  // real index pos, real pos
+  public tileIndexToRealMap = new Map<string, Vec2>();
 
   @property(Prefab)
   tile: Prefab;
@@ -37,9 +43,8 @@ export class Board extends Component {
     this.node.setScale(xScale, yScale);
 
     console.log('setup wall');
-    
-    this.drawBoard(selectedLevel.boardConfig);
 
+    this.drawBoard(selectedLevel.boardConfig);
 
     return this.tiles;
   }
@@ -56,6 +61,12 @@ export class Board extends Component {
         return col.getTileData();
       });
     });
+
+    console.log('print realtoin');
+    this.tileRealToIndexMap.forEach((val, key) => {
+      console.log([key]);
+    });
+    
   }
 
   private generateTile(
@@ -65,10 +76,16 @@ export class Board extends Component {
     rowIndex: number
   ) {
     const t = instantiate(this.tile);
+
+    const x = Math.round(colIndex * tileWidth + tileWidth / 2);
+    const y = Math.round(-rowIndex * tileWidth - tileWidth / 2);
+
     t.setParent(this.node);
-    t.setPosition(colIndex * tileWidth + tileWidth / 2, -rowIndex * tileWidth - tileWidth / 2);
+    t.setPosition(x, y);
     const tile = t.getComponent(Tile);
     tile.setupTile(v2(colIndex, rowIndex), col);
+    this.tileRealToIndexMap.set(v2ToString(v2(x, y)), v2(colIndex, rowIndex));
+    this.tileIndexToRealMap.set(v2ToString(v2(colIndex, rowIndex)), v2(x, y));
     return tile;
   }
 
@@ -76,13 +93,13 @@ export class Board extends Component {
     return this.tileDatas;
   }
 
-  public getTileFromIndex(col:number, row:number){
-    if(col < 0 || col > 11 || row < 0 || row > 11) return undefined;
+  public getTileFromIndex(col: number, row: number) {
+    if (col < 0 || col > 11 || row < 0 || row > 11) return undefined;
     return this.tiles[row][col];
   }
 
   public getTilePositionFromIndex(col: number, row: number) {
-    if(col < 0 || col > 11 || row < 0 || row > 11) return undefined;
+    if (col < 0 || col > 11 || row < 0 || row > 11) return undefined;
     return this.tileDatas[row][col].pos;
   }
 
@@ -112,7 +129,7 @@ export class Board extends Component {
 
   public getClearRandomPosPosition() {
     const randomPos = math.v2(randomRangeInt(0, 12), randomRangeInt(0, 12));
-    const {x, y} = randomPos;
+    const { x, y } = randomPos;
     if (!this.isTileWalled(x, y)) {
       return this.getTilePositionFromIndex(x, y);
     }
@@ -120,12 +137,14 @@ export class Board extends Component {
   }
 
   public spawnFruit() {
-    const tile = this.getTileFromTilePosition(math.randomRangeInt(0, 11), math.randomRangeInt(0, 11));
+    const tile = this.getTileFromTilePosition(
+      math.randomRangeInt(0, 11),
+      math.randomRangeInt(0, 11)
+    );
     if (tile && tile.getTileData().content === TILE_CONTENT.WALL) {
       this.spawnFruit();
     }
     tile.setTileContent(TILE_CONTENT.FRUIT);
     return tile.getTileData();
   }
-
 }
