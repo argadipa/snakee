@@ -23,7 +23,7 @@
     "_prefab": null,
     "autoReleaseAssets": false,
     "_globals": {
-      "__id__": 184
+      "__id__": 185
     },
     "_id": "9b016163-f1c5-49fe-a687-d2ea34cfefa4"
   },
@@ -69,13 +69,13 @@
     "_active": true,
     "_components": [
       {
-        "__id__": 178
+        "__id__": 179
       },
       {
-        "__id__": 180
+        "__id__": 181
       },
       {
-        "__id__": 182
+        "__id__": 183
       }
     ],
     "_prefab": null,
@@ -1862,6 +1862,9 @@
       },
       {
         "__id__": 78
+      },
+      {
+        "__id__": 178
       }
     ],
     "_prefab": null,
@@ -1941,6 +1944,9 @@
     },
     "uIManager": {
       "__id__": 120
+    },
+    "snakeSound": {
+      "__id__": 178
     },
     "_id": "93qbvav31Gz5bXZsjbj6ly"
   },
@@ -4523,6 +4529,21 @@
     "fileId": "eaGEkmlCpANK+GS6CImtZa"
   },
   {
+    "__type__": "cc.AudioSource",
+    "_name": "",
+    "_objFlags": 0,
+    "node": {
+      "__id__": 76
+    },
+    "_enabled": true,
+    "__prefab": null,
+    "_clip": null,
+    "_loop": false,
+    "_playOnAwake": true,
+    "_volume": 1,
+    "_id": "97zrHGGFdElaN9texCo3rw"
+  },
+  {
     "__type__": "cc.UITransform",
     "_name": "",
     "_objFlags": 0,
@@ -4531,7 +4552,7 @@
     },
     "_enabled": true,
     "__prefab": {
-      "__id__": 179
+      "__id__": 180
     },
     "_contentSize": {
       "__type__": "cc.Size",
@@ -4558,7 +4579,7 @@
     },
     "_enabled": true,
     "__prefab": {
-      "__id__": 181
+      "__id__": 182
     },
     "_cameraComponent": {
       "__id__": 4
@@ -4579,7 +4600,7 @@
     },
     "_enabled": true,
     "__prefab": {
-      "__id__": 183
+      "__id__": 184
     },
     "_alignFlags": 45,
     "_target": null,
@@ -4608,16 +4629,16 @@
   {
     "__type__": "cc.SceneGlobals",
     "ambient": {
-      "__id__": 185
-    },
-    "shadows": {
       "__id__": 186
     },
-    "_skybox": {
+    "shadows": {
       "__id__": 187
     },
-    "fog": {
+    "_skybox": {
       "__id__": 188
+    },
+    "fog": {
+      "__id__": 189
     }
   },
   {

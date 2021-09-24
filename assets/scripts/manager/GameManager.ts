@@ -1,34 +1,33 @@
 import {
   _decorator,
   Component,
-  SpriteFrame,
   math,
   macro,
   Prefab,
   instantiate,
-  assetManager,
   Vec2,
   v2,
-  v3,
   Vec3,
+  AudioSource,
+  assetManager,
+  AudioClip,
 } from 'cc';
 import { Board } from '../component/Board';
 import { Tile, TileData } from '../component/Tile';
 import {
   ASSET_KEY,
   CONTROLLER_EVENT,
-  DIRECTION,
   SNAKE_PART_SPRITE,
-  SNAKE_PART_STATE,
   TILE_CONTENT,
 } from '../enum';
-import { getSpriteFrameKey } from '../helper/Spritesheet';
 import { ILevelConfig, ISnakePart } from '../interface';
 import { levels } from '../LevelConfigs';
 import { KeypadManager } from './KeypadManager';
 import { SnakePart } from '../component/SnakePart';
 import { Vec2Helper } from '../helper/VectorDirection';
 import { UIManager } from './UIManager';
+import { getAssetKey } from '../helper/Asset';
+import { GlobalManager } from './GlobalManager';
 const { ccclass, property } = _decorator;
 
 @ccclass('GameManager')
@@ -63,6 +62,9 @@ export class GameManager extends Component {
   @property(UIManager)
   uIManager: UIManager;
 
+  @property(AudioSource)
+  snakeSound: AudioSource;
+
   start() {
     const lvl = this.randomizeLevel
       ? Math.floor(Math.random() * Object.keys(levels).length) + 1
@@ -89,8 +91,9 @@ export class GameManager extends Component {
   }
 
   private beatHandler() {
-    this.moveSnake();
     this.processFoodToTail();
+    this.moveSnake();
+    
   }
 
   private moveSnake() {
@@ -213,9 +216,7 @@ export class GameManager extends Component {
     if (this.eatenTile.size <= 0) return;
     this.eatenTile.forEach((val, key, map) => {
       map.set(key, (val += 1));
-      console.log(`'adding food ${key} to ${val}`);
-      if (val > this.snake.length - 1) {
-        key.setTileContent(TILE_CONTENT.NONE);
+      if (val > this.snake.length) {
         const newPart = instantiate(this.snakePartPrefab);
         const snakePart = newPart.getComponent(SnakePart);
         snakePart.createPart(
@@ -225,6 +226,7 @@ export class GameManager extends Component {
         snakePart.node.setPosition(key.getTileData().pos.x, key.getTileData().pos.y);
         snakePart.node.setParent(this.board.node);
         this.snake.push(snakePart);
+        key.setTileContent(TILE_CONTENT.NONE);
         map.delete(key);
       }
     });
@@ -285,18 +287,20 @@ export class GameManager extends Component {
     const { x, y } = pos;
     // if out of area
     if (this.checkOutOfArea(math.v2(x, y))) {
+      this.playCrashSound();
       this.setGameOver();
       return;
     }
 
     if (this.board.isTileWalled(x, y)) {
-      console.log('nabrak wall');
+      this.playCrashSound();
       this.setGameOver();
       return;
     }
 
     this.getSnakeIndexPos().forEach((pos, i) => {
       if (i > 0 && this.snake[0].IndexPos.equals(pos)) {
+        this.playCrashSound();
         this.setGameOver();
         return;
       }
@@ -305,7 +309,7 @@ export class GameManager extends Component {
     if (this.board.isTileFruit(x, y)) {
       this.board.clearTile(x, y);
       this.spawnFood();
-      this.snakeEat(x, y, 0);
+      this.snakeEat(x, y, 1);
       this.uIManager.updateScore(++this.score);
     }
   }
@@ -334,6 +338,19 @@ export class GameManager extends Component {
     const tile = this.board.getTileFromIndex(x, y);
     tile.changeFoodToSnakePart();
     this.eatenTile.set(tile, length);
+    this.playEatSound();
+  }
+
+  private playEatSound() {
+    if (GlobalManager.muteSound) return;
+    const clip = assetManager.assets.get(getAssetKey(ASSET_KEY.EAT)) as AudioClip;
+    this.snakeSound.playOneShot(clip);
+  }
+
+  private playCrashSound() {
+    if (GlobalManager.muteSound) return;
+    const clip = assetManager.assets.get(getAssetKey(ASSET_KEY.CRASH)) as AudioClip;
+    this.snakeSound.playOneShot(clip);
   }
 
   private spawnFood() {
@@ -348,7 +365,7 @@ export class GameManager extends Component {
     ) {
       return this.spawnFood();
     }
-    randomTile.setTileContent(TILE_CONTENT.FRUIT);
+    return randomTile.setTileContent(TILE_CONTENT.FRUIT);
   }
 
   private setupController() {
@@ -421,8 +438,13 @@ export class GameManager extends Component {
 
   private isSnakePartByRealPos(pos: Vec3) {
     this.getSnakeRealPosV3().forEach((part) => {
-      if (part.equals(pos)) return true;
+      console.log(part);
+      if (part.equals(pos)) {
+        console.log('food position in snake!', [pos, part])
+        return true;
+      }
     });
+    console.log('food is not in snake', pos);
     return false;
   }
 

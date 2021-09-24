@@ -9,7 +9,7 @@ export class GlobalManager extends Component {
     @property(AudioSource)
     gas : AudioSource
 
-    private mute = false;
+    public static muteSound = false;
 
     public static globalAudioSource: AudioSource;
 
@@ -20,6 +20,7 @@ export class GlobalManager extends Component {
 
     private setupGlobalNodes() {
         GlobalManager.globalAudioSource = this.gas;
+        GlobalManager.muteSound = false;
         game.addPersistRootNode(this.node);
     }
 }
