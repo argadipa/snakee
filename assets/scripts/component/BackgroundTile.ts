@@ -9,11 +9,9 @@ export class BackgroundTile extends Component {
   spriteKey = ASSET_KEY.SPRITE_TILE;
 
   start() {
-    console.log('BACKGROUND TILE');
     this.sprite = this.getComponent(Sprite);
     this.sprite.spriteFrame = assetManager.assets.get(
       getSpriteFrameKey(this.spriteKey)
     ) as SpriteFrame;
-    console.log('BGTILE SPRITE', this.sprite);
   }
 }

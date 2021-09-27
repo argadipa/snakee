@@ -194,6 +194,10 @@ export class GameManager extends Component {
 
           let angle = Vec2Helper.VecToAngle(dirDelta);
 
+          if (this.snake[i].IndexPos.equals(this.snake[i + 1].IndexPos)) {
+            console.log('same same');
+          }
+
           switch (angle) {
             case 0:
               rotateTo =
@@ -258,13 +262,10 @@ export class GameManager extends Component {
       if (val > this.snake.length) {
         const newPart = instantiate(this.snakePartPrefab);
         const snakePart = newPart.getComponent(SnakePart);
+        const tail = this.snake[this.snake.length - 1];
         snakePart.createPart(
-          v2(key.getTileData().pos.x, key.getTileData().pos.y),
-          key.getTileData().pos
-        );
-        snakePart.node.setPosition(
-          key.getTileData().pos.x,
-          key.getTileData().pos.y
+          v2(tail.node.position.x, tail.node.position.y),
+          tail.IndexPos
         );
         snakePart.node.setParent(this.board.node);
         this.snake.push(snakePart);
